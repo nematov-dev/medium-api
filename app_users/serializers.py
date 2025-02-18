@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from rest_framework.exceptions import ValidationError
+
 from .models import VerificationCode
 import random
 import string
@@ -28,5 +30,32 @@ class RegisterSerializer(serializers.Serializer):
         user.save()
         return user
 
-def generate_verification_code(length=6):
-    return ''.join(random.choices(string.digits, k=length))
+    def generate_verification_code(length=6):
+        return ''.join(random.choices(string.digits, k=length))
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("__all__")
+
+class UpdatePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+    new_password2 = serializers.CharField(required=True)
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise ValidationError("Eski parol noto'g'ri.")
+        return value
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['new_password2']:
+            raise ValidationError("Yangi parol va tasdiq parol mos kelmaydi.")
+        return attrs
+
+
+
+
+
+

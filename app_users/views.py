@@ -1,8 +1,11 @@
+from django.contrib.auth import get_user_model
+from django.template.context_processors import request
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.auth import get_user_model
-from .serializers import RegisterSerializer
+
+from .serializers import RegisterSerializer, UserSerializer, UpdatePasswordSerializer
 from .models import VerificationCode
 from .utils import send_verification_email
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -72,4 +75,40 @@ class LoginApiView(APIView):
                 "access": str(refresh.access_token),
             })
 
+
         return Response({"error": "Username yoki parol noto‘g‘ri"}, status=status.HTTP_401_UNAUTHORIZED)
+
+class UpdatePasswordAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        serializer = UpdatePasswordSerializer(data=request.data,context={'request': request})
+
+        if serializer.is_valid():
+            user = request.user
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            return Response({"message": "Parol muvaffaqiyatli yangilandi."}, status=200)
+
+        return Response(serializer.errors, status=400)
+
+
+
+class DashboardAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self,request):
+        serializer = UserSerializer(request.user)
+        return  Response(data=serializer.data, status=status.HTTP_200_OK)
+
+    def put(self,request):
+        serializer = UserSerializer(request.user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+

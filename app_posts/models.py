@@ -9,7 +9,7 @@ from app_common.models import BaseModel
 
 class PostsModel(BaseModel):
     author = models.ForeignKey(User, on_delete=models.PROTECT, related_name="posts")
-    image = models.ImageField(upload_to='profiles',validators=[FileExtensionValidator(allowed_extensions=['png','jpg','heic'])])
+    image = models.ImageField(upload_to='profiles',validators=[FileExtensionValidator(allowed_extensions=['png','jpg','heic'])],null=True)
     slug = models.SlugField(unique=True, null=True)
     title = models.CharField(max_length=255)
     content = models.TextField()
